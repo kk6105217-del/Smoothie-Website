@@ -42,7 +42,13 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ fixedCategorySlug, c
 
   // Load categories
   useEffect(() => {
-    api.categories.getAll().then(res => setCategories(res.categories)).catch(() => {});
+    api.categories.getAll()
+      .then(res => {
+        if (Array.isArray(res?.categories)) {
+          setCategories(res.categories);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // Sync state with URL params
@@ -84,8 +90,8 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ fixedCategorySlug, c
         ...filters,
         limit: 48
       });
-      setProducts(res.products || []);
-      setTotalProducts(res.pagination?.total || 0);
+      setProducts(Array.isArray(res?.products) ? res.products : []);
+      setTotalProducts(res?.pagination?.total || (Array.isArray(res?.products) ? res.products.length : 0));
     } catch (err) {
       console.error('Failed to load products:', err);
     } finally {
@@ -214,7 +220,7 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ fixedCategorySlug, c
                   >
                     All Categories
                   </button>
-                  {categories.map((cat) => (
+                  {(categories ?? []).map((cat) => (
                     <button
                       key={cat.id}
                       onClick={() => applyFilters({ category: cat.slug })}
@@ -407,7 +413,7 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ fixedCategorySlug, c
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4">
-                {products.map((prod) => (
+                {(products ?? []).map((prod) => (
                   <ProductCard key={prod.id} product={prod} />
                 ))}
               </div>

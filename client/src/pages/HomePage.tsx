@@ -37,8 +37,8 @@ export const HomePage: React.FC = () => {
           api.products.getAll({ limit: 40 })
         ]);
 
-        setCategories(catsRes.categories || []);
-        setAllProducts(prodsRes.products || []);
+        setCategories(Array.isArray(catsRes?.categories) ? catsRes.categories : []);
+        setAllProducts(Array.isArray(prodsRes?.products) ? prodsRes.products : []);
 
         // Load recently viewed from localStorage
         const stored = localStorage.getItem('vk_recently_viewed');
@@ -58,14 +58,15 @@ export const HomePage: React.FC = () => {
   }, []);
 
   // Filter sections
-  const bestSellers = allProducts.filter(p => p.rating_count && p.rating_count > 1).slice(0, 5);
-  const featuredKits = allProducts.filter(p => p.category_slug === 'student-diy-project-kits' || p.category_slug === 'iot-development-kits' || p.is_featured).slice(0, 5);
-  const arduinoEspProducts = allProducts.filter(p => p.category_slug === 'arduino-boards-and-kits' || p.category_slug === 'esp32-and-esp8266').slice(0, 5);
-  const sensorProducts = allProducts.filter(p => p.category_slug === 'sensors-and-modules').slice(0, 5);
-  const roboticsDroneProducts = allProducts.filter(p => p.category_slug === 'robotics-kits' || p.category_slug === 'drone-components').slice(0, 5);
-  const newArrivals = [...allProducts].sort((a, b) => b.id - a.id).slice(0, 5);
-  const specialOffers = allProducts.filter(p => p.discounted_price && p.discounted_price < p.regular_price).slice(0, 5);
-  const recommendedProducts = allProducts.slice(0, 5);
+  const safeProducts = Array.isArray(allProducts) ? allProducts : [];
+  const bestSellers = safeProducts.filter(p => p.rating_count && p.rating_count > 1).slice(0, 5);
+  const featuredKits = safeProducts.filter(p => p.category_slug === 'student-diy-project-kits' || p.category_slug === 'iot-development-kits' || p.is_featured).slice(0, 5);
+  const arduinoEspProducts = safeProducts.filter(p => p.category_slug === 'arduino-boards-and-kits' || p.category_slug === 'esp32-and-esp8266').slice(0, 5);
+  const sensorProducts = safeProducts.filter(p => p.category_slug === 'sensors-and-modules').slice(0, 5);
+  const roboticsDroneProducts = safeProducts.filter(p => p.category_slug === 'robotics-kits' || p.category_slug === 'drone-components').slice(0, 5);
+  const newArrivals = [...safeProducts].sort((a, b) => b.id - a.id).slice(0, 5);
+  const specialOffers = safeProducts.filter(p => p.discounted_price && p.discounted_price < p.regular_price).slice(0, 5);
+  const recommendedProducts = safeProducts.slice(0, 5);
 
   const handleNewsletterSubmit = (e: React.FormEvent) => {
     e.preventDefault();

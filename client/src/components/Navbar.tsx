@@ -63,7 +63,13 @@ export const Navbar: React.FC<NavbarProps> = ({ isMobileOpen = false, setIsMobil
   const { user, isAdmin } = useAuth();
 
   useEffect(() => {
-    api.categories.getAll().then(res => setCategories(res.categories)).catch(() => {});
+    api.categories.getAll()
+      .then(res => {
+        if (Array.isArray(res?.categories)) {
+          setCategories(res.categories);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const openDrawer = drawerOpen || isMobileOpen;
@@ -217,7 +223,7 @@ export const Navbar: React.FC<NavbarProps> = ({ isMobileOpen = false, setIsMobil
                   All Product Categories
                 </h4>
                 <div className="space-y-0.5">
-                  {categories.map((cat) => (
+                  {(categories ?? []).map((cat) => (
                     <Link
                       key={cat.id}
                       to={`/category/${cat.slug}`}

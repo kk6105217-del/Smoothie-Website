@@ -11,8 +11,15 @@ import {
   Address,
   UpiPayment
 } from '../types';
+import {
+  FALLBACK_CATEGORIES,
+  FALLBACK_BANNERS,
+  FALLBACK_PRODUCTS,
+  FALLBACK_SETTINGS,
+  filterFallbackProducts
+} from '../data/fallbackData';
 
-const API_BASE = '/api';
+const API_BASE = (import.meta as any).env?.VITE_API_URL || '/api';
 
 export function getAuthToken(): string | null {
   return localStorage.getItem('vk_auth_token');
@@ -59,16 +66,15 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     headers,
   });
 
-  const contentType = response.headers.get('content-type');
-  let data: any;
-  if (contentType && contentType.includes('application/json')) {
-    data = await response.json();
-  } else {
-    data = await response.text();
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    throw new Error(`Invalid API response: received content-type "${contentType || 'unknown'}" instead of application/json.`);
   }
 
+  const data = await response.json();
+
   if (!response.ok) {
-    const errorMsg = data?.error || (typeof data === 'string' ? data : 'An unexpected error occurred');
+    const errorMsg = data?.error || 'An unexpected error occurred';
     throw new Error(errorMsg);
   }
 
@@ -128,9 +134,38 @@ export const api = {
 
   // Categories
   categories: {
-    getAll: () => request<{ categories: Category[] }>('/categories'),
-    getAdminAll: () => request<{ categories: Category[] }>('/categories/all'),
-    getBySlug: (slug: string) => request<{ category: Category }>(`/categories/${slug}`),
+    getAll: async () => {
+      try {
+        const res = await request<{ categories: Category[] }>('/categories');
+        if (Array.isArray(res?.categories) && res.categories.length > 0) {
+          return res;
+        }
+        return { categories: FALLBACK_CATEGORIES };
+      } catch (err) {
+        console.warn('API /categories unavailable, falling back to local catalog:', err);
+        return { categories: FALLBACK_CATEGORIES };
+      }
+    },
+    getAdminAll: async () => {
+      try {
+        const res = await request<{ categories: Category[] }>('/categories/all');
+        if (Array.isArray(res?.categories)) return res;
+        return { categories: FALLBACK_CATEGORIES };
+      } catch (err) {
+        return { categories: FALLBACK_CATEGORIES };
+      }
+    },
+    getBySlug: async (slug: string) => {
+      try {
+        const res = await request<{ category: Category }>(`/categories/${slug}`);
+        if (res?.category) return res;
+        throw new Error('Category not found');
+      } catch (err) {
+        const found = FALLBACK_CATEGORIES.find(c => c.slug === slug);
+        if (found) return { category: found };
+        throw err;
+      }
+    },
     create: (category: Partial<Category>) =>
       request<{ message: string; id: number }>('/categories', {
         method: 'POST',
@@ -149,7 +184,7 @@ export const api = {
 
   // Products
   products: {
-    getAll: (params: {
+    getAll: async (params: {
       q?: string;
       category?: string;
       brand?: string;
@@ -162,23 +197,33 @@ export const api = {
       page?: number;
       limit?: number;
     } = {}) => {
-      const query = new URLSearchParams();
-      if (params.q) query.append('q', params.q);
-      if (params.category) query.append('category', params.category);
-      if (params.brand) query.append('brand', params.brand);
-      if (params.min_price) query.append('min_price', String(params.min_price));
-      if (params.max_price) query.append('max_price', String(params.max_price));
-      if (params.in_stock) query.append('in_stock', 'true');
-      if (params.rating) query.append('rating', String(params.rating));
-      if (params.featured) query.append('featured', 'true');
-      if (params.sort) query.append('sort', params.sort);
-      if (params.page) query.append('page', String(params.page));
-      if (params.limit) query.append('limit', String(params.limit));
+      try {
+        const query = new URLSearchParams();
+        if (params.q) query.append('q', params.q);
+        if (params.category) query.append('category', params.category);
+        if (params.brand) query.append('brand', params.brand);
+        if (params.min_price !== undefined) query.append('min_price', String(params.min_price));
+        if (params.max_price !== undefined) query.append('max_price', String(params.max_price));
+        if (params.in_stock) query.append('in_stock', 'true');
+        if (params.rating !== undefined) query.append('rating', String(params.rating));
+        if (params.featured) query.append('featured', 'true');
+        if (params.sort) query.append('sort', params.sort);
+        if (params.page) query.append('page', String(params.page));
+        if (params.limit) query.append('limit', String(params.limit));
 
-      return request<{
-        products: Product[];
-        pagination: { total: number; page: number; limit: number; totalPages: number };
-      }>(`/products?${query.toString()}`);
+        const res = await request<{
+          products: Product[];
+          pagination: { total: number; page: number; limit: number; totalPages: number };
+        }>(`/products?${query.toString()}`);
+
+        if (Array.isArray(res?.products) && res.products.length > 0) {
+          return res;
+        }
+        return filterFallbackProducts(params);
+      } catch (err) {
+        console.warn('API /products unavailable, falling back to local products:', err);
+        return filterFallbackProducts(params);
+      }
     },
     getAdminAll: (params: { search?: string; category?: number | string; status?: string } = {}) => {
       const query = new URLSearchParams();
@@ -187,7 +232,17 @@ export const api = {
       if (params.status) query.append('status', params.status);
       return request<{ products: Product[] }>(`/products/admin/all?${query.toString()}`);
     },
-    getBySlug: (slug: string) => request<{ product: Product }>(`/products/${slug}`),
+    getBySlug: async (slug: string) => {
+      try {
+        const res = await request<{ product: Product }>(`/products/${slug}`);
+        if (res?.product) return res;
+        throw new Error('Product not found');
+      } catch (err) {
+        const found = FALLBACK_PRODUCTS.find(p => p.slug === slug);
+        if (found) return { product: found };
+        throw err;
+      }
+    },
     create: (product: any) =>
       request<{ message: string; productId: number }>('/products', {
         method: 'POST',
@@ -372,7 +427,18 @@ export const api = {
 
   // Banners
   banners: {
-    getAll: () => request<{ banners: Banner[] }>('/banners'),
+    getAll: async () => {
+      try {
+        const res = await request<{ banners: Banner[] }>('/banners');
+        if (Array.isArray(res?.banners) && res.banners.length > 0) {
+          return res;
+        }
+        return { banners: FALLBACK_BANNERS };
+      } catch (err) {
+        console.warn('API /banners unavailable, falling back to local banners:', err);
+        return { banners: FALLBACK_BANNERS };
+      }
+    },
     getAdminAll: () => request<{ banners: Banner[] }>('/banners/admin/all'),
     create: (banner: Partial<Banner>) =>
       request<{ message: string; id: number }>('/banners/admin', {
@@ -392,7 +458,15 @@ export const api = {
 
   // Settings & Analytics
   settings: {
-    get: () => request<{ settings: StoreSettings }>('/settings'),
+    get: async () => {
+      try {
+        const res = await request<{ settings: StoreSettings }>('/settings');
+        if (res?.settings) return res;
+        return { settings: FALLBACK_SETTINGS };
+      } catch (err) {
+        return { settings: FALLBACK_SETTINGS };
+      }
+    },
     update: (settings: StoreSettings) =>
       request<{ message: string }>('/settings/admin', {
         method: 'PUT',

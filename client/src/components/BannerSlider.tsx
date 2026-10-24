@@ -11,7 +11,7 @@ export const BannerSlider: React.FC = () => {
   useEffect(() => {
     api.banners.getAll()
       .then(res => {
-        if (res.banners && res.banners.length > 0) {
+        if (Array.isArray(res?.banners) && res.banners.length > 0) {
           setBanners(res.banners);
         } else {
           // Default fallback
@@ -121,7 +121,7 @@ export const BannerSlider: React.FC = () => {
 
           {/* Dots Indicator */}
           <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex space-x-2">
-            {banners.map((_, idx) => (
+            {(banners ?? []).map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => setCurrentIndex(idx)}

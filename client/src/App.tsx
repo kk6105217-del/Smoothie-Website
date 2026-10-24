@@ -7,6 +7,7 @@ import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
 
 // Common Components
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { Header } from './components/Header';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
@@ -112,64 +113,66 @@ const NotFoundPage: React.FC = () => {
 
 export function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <CartProvider>
-          <WishlistProvider>
-            <ScrollToTop />
-            <Routes>
-              {/* Storefront Layout & Customer Routes */}
-              <Route path="/" element={<StoreLayout />}>
-                <Route index element={<HomePage />} />
-                <Route path="products" element={<ProductsPage />} />
-                <Route path="category/:slug" element={<CategoryPage />} />
-                <Route path="product/:slug" element={<ProductDetailPage />} />
-                <Route path="cart" element={<CartPage />} />
-                <Route path="checkout" element={<CheckoutPage />} />
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AuthProvider>
+          <CartProvider>
+            <WishlistProvider>
+              <ScrollToTop />
+              <Routes>
+                {/* Storefront Layout & Customer Routes */}
+                <Route path="/" element={<StoreLayout />}>
+                  <Route index element={<HomePage />} />
+                  <Route path="products" element={<ProductsPage />} />
+                  <Route path="category/:slug" element={<CategoryPage />} />
+                  <Route path="product/:slug" element={<ProductDetailPage />} />
+                  <Route path="cart" element={<CartPage />} />
+                  <Route path="checkout" element={<CheckoutPage />} />
 
-                {/* Authentication Routes */}
-                <Route path="login" element={<LoginPage />} />
-                <Route path="register" element={<RegisterPage />} />
-                <Route path="forgot-password" element={<ForgotPasswordPage />} />
-                <Route path="reset-password" element={<ResetPasswordPage />} />
+                  {/* Authentication Routes */}
+                  <Route path="login" element={<LoginPage />} />
+                  <Route path="register" element={<RegisterPage />} />
+                  <Route path="forgot-password" element={<ForgotPasswordPage />} />
+                  <Route path="reset-password" element={<ResetPasswordPage />} />
 
-                {/* Account & Orders */}
-                <Route path="account" element={<AccountPage />} />
-                <Route path="orders" element={<OrdersPage />} />
-                <Route path="orders/:id" element={<OrderDetailPage />} />
-                <Route path="wishlist" element={<WishlistPage />} />
-                <Route path="track-order" element={<TrackOrderPage />} />
+                  {/* Account & Orders */}
+                  <Route path="account" element={<AccountPage />} />
+                  <Route path="orders" element={<OrdersPage />} />
+                  <Route path="orders/:id" element={<OrderDetailPage />} />
+                  <Route path="wishlist" element={<WishlistPage />} />
+                  <Route path="track-order" element={<TrackOrderPage />} />
 
-                {/* Informational & Legal */}
-                <Route path="contact" element={<ContactPage />} />
-                <Route path="about" element={<AboutPage />} />
-                <Route path="policies" element={<LegalPolicyPage />} />
-                <Route path="policy/:type" element={<LegalPolicyPage />} />
+                  {/* Informational & Legal */}
+                  <Route path="contact" element={<ContactPage />} />
+                  <Route path="about" element={<AboutPage />} />
+                  <Route path="policies" element={<LegalPolicyPage />} />
+                  <Route path="policy/:type" element={<LegalPolicyPage />} />
 
-                {/* 404 Route */}
-                <Route path="*" element={<NotFoundPage />} />
-              </Route>
+                  {/* 404 Route */}
+                  <Route path="*" element={<NotFoundPage />} />
+                </Route>
 
-              {/* Dedicated Admin Portal Routes */}
-              <Route path="/admin/login" element={<AdminLoginPage />} />
-              <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<AdminDashboard />} />
-                <Route path="products" element={<AdminProducts />} />
-                <Route path="categories" element={<AdminCategories />} />
-                <Route path="inventory" element={<AdminInventory />} />
-                <Route path="orders" element={<AdminOrders />} />
-                <Route path="upi-payments" element={<AdminUpiPayments />} />
-                <Route path="coupons" element={<AdminCoupons />} />
-                <Route path="banners" element={<AdminBanners />} />
-                <Route path="reviews" element={<AdminReviews />} />
-                <Route path="reports" element={<AdminReports />} />
-                <Route path="settings" element={<AdminSettings />} />
-              </Route>
-            </Routes>
-          </WishlistProvider>
-        </CartProvider>
-      </AuthProvider>
-    </BrowserRouter>
+                {/* Dedicated Admin Portal Routes */}
+                <Route path="/admin/login" element={<AdminLoginPage />} />
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="products" element={<AdminProducts />} />
+                  <Route path="categories" element={<AdminCategories />} />
+                  <Route path="inventory" element={<AdminInventory />} />
+                  <Route path="orders" element={<AdminOrders />} />
+                  <Route path="upi-payments" element={<AdminUpiPayments />} />
+                  <Route path="coupons" element={<AdminCoupons />} />
+                  <Route path="banners" element={<AdminBanners />} />
+                  <Route path="reviews" element={<AdminReviews />} />
+                  <Route path="reports" element={<AdminReports />} />
+                  <Route path="settings" element={<AdminSettings />} />
+                </Route>
+              </Routes>
+            </WishlistProvider>
+          </CartProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

@@ -44,7 +44,13 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
   const accountRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    api.categories.getAll().then(res => setCategories(res.categories)).catch(() => {});
+    api.categories.getAll()
+      .then(res => {
+        if (Array.isArray(res?.categories)) {
+          setCategories(res.categories);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // Close dropdown on outside click
@@ -176,7 +182,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
               className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs px-2.5 py-2.5 border-r border-gray-300 focus:outline-none cursor-pointer max-w-[130px] sm:max-w-[150px] truncate hidden sm:block"
             >
               <option value="">All Categories</option>
-              {categories.map((c) => (
+              {(categories ?? []).map((c) => (
                 <option key={c.id} value={c.slug}>
                   {c.name}
                 </option>
